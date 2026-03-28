@@ -1,0 +1,87 @@
+{
+  "name": "Report",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Description of the emergency"
+    },
+    "location": {
+      "type": "string",
+      "description": "Detected location"
+    },
+    "state": {
+      "type": "string",
+      "description": "Detected state"
+    },
+    "ip": {
+      "type": "string",
+      "description": "Detected IP address"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "GPS latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "GPS longitude"
+    },
+    "incidentId": {
+      "type": "string",
+      "description": "Generated incident ID (nullable)"
+    },
+    "videoUrls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uploaded video evidence URLs"
+    },
+    "audioUrls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uploaded audio evidence URLs"
+    },
+    "userId": {
+      "type": "string",
+      "description": "User ID if logged in (nullable)"
+    },
+    "userName": {
+      "type": "string",
+      "description": "Reporter name"
+    },
+    "userEmail": {
+      "type": "string",
+      "description": "Reporter email"
+    },
+    "userPhone": {
+      "type": "string",
+      "description": "Reporter phone"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Received",
+        "In Progress",
+        "Closed"
+      ],
+      "default": "Received",
+      "description": "Current status of the report"
+    },
+    "isVerified": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the report has been verified by admin"
+    },
+    "isAnonymous": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the reporter skipped login"
+    }
+  },
+  "required": [
+    "description"
+  ]
+}

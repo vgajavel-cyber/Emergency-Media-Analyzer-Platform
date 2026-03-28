@@ -1,0 +1,25 @@
+{
+  "name": "EmergencyContact",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Contact label (e.g. Contact 1, Contact 2)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Contact name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "userId": {
+      "type": "string",
+      "description": "Owner user ID"
+    }
+  },
+  "required": [
+    "phone"
+  ]
+}
