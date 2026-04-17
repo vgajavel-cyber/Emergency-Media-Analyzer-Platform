@@ -80,7 +80,10 @@ export default function Track() {
 
   const startVideoRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: { ideal: "environment" } }, 
+        audio: true 
+      });
       setVideoStream(stream);
       setTimeout(() => {
         if (videoPreviewRef.current) {
