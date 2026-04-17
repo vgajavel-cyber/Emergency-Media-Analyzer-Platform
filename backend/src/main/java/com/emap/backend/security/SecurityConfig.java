@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/ai/**").permitAll()
                 .requestMatchers("/api/media/**").permitAll()
                 .requestMatchers("/api/location/**").permitAll()
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -60,9 +61,10 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://localhost:3000",
             "http://192.168.0.70:5173",
-            "https://192.168.0.70:5173",
-            "https://localhost:5173",
-            "https://retake-enjoyably-imperfect.ngrok-free.dev"
+            "https://master.d322r943p3j6ri.amplifyapp.com",
+            "https://emapnow.me",
+            "https://www.emapnow.me"
+
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of(
