@@ -10,7 +10,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import EMapHeader from "../components/EMapHeader";
 
 const BACKEND = import.meta.env.VITE_API_URL || "http://localhost:8080";
-const appUrl = `http://192.168.0.70:5173`;
+const appUrl = `https://emapnow.me`;
 
 const STATUS_COLORS = {
   "Received":    { text: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-200" },
