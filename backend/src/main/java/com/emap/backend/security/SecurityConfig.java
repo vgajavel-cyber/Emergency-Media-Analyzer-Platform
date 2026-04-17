@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/ai/suggest").permitAll()
                 .requestMatchers("/api/ai/**").permitAll()
                 .requestMatchers("/api/media/**").permitAll()
+                .requestMatchers("/api/location/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -64,7 +65,11 @@ public class SecurityConfig {
             "https://retake-enjoyably-imperfect.ngrok-free.dev"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "ngrok-skip-browser-warning"
+        ));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

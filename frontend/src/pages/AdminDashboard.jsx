@@ -32,6 +32,16 @@ function StatCard({ icon: IconComp, label, value, color }) {
   );
 }
 
+// Detect if a URL is a video based on filename patterns
+const isVideoUrl = (url) => {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  if (lower.match(/\.(mp4|mov|avi)$/)) return true;
+  if (lower.includes('recording-') && lower.endsWith('.webm')) return true;
+  if (lower.includes('/media/') && lower.match(/\.(mp4|mov|avi|webm)$/) && !lower.includes('audio-')) return true;
+  return false;
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [reportList, setReportList] = useState([]);
@@ -42,10 +52,6 @@ export default function AdminDashboard() {
   const [callingReport, setCallingReport] = useState(null);
   const [callResult, setCallResult] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(auth.isAuthenticated());
-  const [reportMedia, setReportMedia] = useState({});
-  const [loadingMedia, setLoadingMedia] = useState(null);
-
-  const appUrl = `http://192.168.0.70:5173`;
 
   useEffect(() => { checkAdmin(); }, []);
 
@@ -71,23 +77,6 @@ export default function AdminDashboard() {
       setReportList([]);
     }
     setLoading(false);
-  };
-
-  const loadMedia = async (reportId) => {
-    if (reportMedia[reportId]) return;
-    setLoadingMedia(reportId);
-    try {
-      const token = localStorage.getItem("emap_token");
-      const res = await fetch(`${BACKEND}/api/media/list/${reportId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      setReportMedia((prev) => ({ ...prev, [reportId]: Array.isArray(data) ? data : [] }));
-    } catch (err) {
-      console.error("Failed to load media:", err);
-      setReportMedia((prev) => ({ ...prev, [reportId]: [] }));
-    }
-    setLoadingMedia(null);
   };
 
   const toggleVerified = async (report) => {
@@ -165,10 +154,10 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard icon={FileText}    label="Total Reports" value={total}      color="bg-red-500" />
-          <StatCard icon={Clock}       label="In Progress"   value={inProgress} color="bg-yellow-500" />
-          <StatCard icon={CheckCircle2} label="Verified"     value={verified}   color="bg-green-500" />
-          <StatCard icon={PhoneCall}   label="AI Calls Made" value={aiCalled}   color="bg-purple-500" />
+          <StatCard icon={FileText}     label="Total Reports" value={total}      color="bg-red-500" />
+          <StatCard icon={Clock}        label="In Progress"   value={inProgress} color="bg-yellow-500" />
+          <StatCard icon={CheckCircle2} label="Verified"      value={verified}   color="bg-green-500" />
+          <StatCard icon={PhoneCall}    label="AI Calls Made" value={aiCalled}   color="bg-purple-500" />
         </div>
 
         <div className="flex gap-2 mb-4 flex-wrap">
@@ -216,7 +205,6 @@ export default function AdminDashboard() {
                 const isUpdating = updating === report.id;
                 const isCalling  = callingReport === report.id;
                 const callRes    = callResult[report.id];
-                const media      = reportMedia[report.id];
 
                 return (
                   <div key={report.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all">
@@ -288,11 +276,7 @@ export default function AdminDashboard() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          const isOpen = selectedReport?.id === report.id;
-                          setSelectedReport(isOpen ? null : report);
-                          if (!isOpen) loadMedia(report.id);
-                        }}
+                        onClick={() => setSelectedReport(selectedReport?.id === report.id ? null : report)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-50 text-gray-500 border border-gray-200 hover:border-gray-300 transition-all"
                       >
                         <Eye className="w-3 h-3" />
@@ -323,29 +307,30 @@ export default function AdminDashboard() {
                         </div>
 
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Media Files</p>
-                        {loadingMedia === report.id ? (
-                          <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Loading media…
-                          </div>
-                        ) : media && media.length > 0 ? (
+                        {report.mediaUrls ? (
                           <div className="space-y-2">
-                            {media.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200">
-                                {item.type === "video"
-                                  ? <FileVideo className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                  : <FileAudio className="w-4 h-4 text-purple-500 flex-shrink-0" />}
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                                  item.type === "video" ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"
-                                }`}>
-                                  {item.type?.toUpperCase()}
-                                </span>
-                                <span className="text-xs text-gray-600 flex-1 truncate">{item.filename}</span>
-                                <a href={`${BACKEND}${item.url}`} target="_blank" rel="noreferrer"
-                                  className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex-shrink-0">
-                                  View ↗
-                                </a>
-                              </div>
-                            ))}
+                            {report.mediaUrls.split(",").map((url, idx) => {
+                              const cleanUrl = url.trim();
+                              const isVideo = isVideoUrl(cleanUrl);
+                              const filename = cleanUrl.split("/").pop();
+                              return (
+                                <div key={idx} className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                                  {isVideo
+                                    ? <FileVideo className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                    : <FileAudio className="w-4 h-4 text-purple-500 flex-shrink-0" />}
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                    isVideo ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"
+                                  }`}>
+                                    {isVideo ? "VIDEO" : "AUDIO"}
+                                  </span>
+                                  <span className="text-xs text-gray-600 flex-1 truncate">{filename}</span>
+                                  <a href={cleanUrl} target="_blank" rel="noreferrer"
+                                    className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors flex-shrink-0">
+                                    View ↗
+                                  </a>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <p className="text-xs text-gray-400 italic py-1">No media uploaded for this report.</p>

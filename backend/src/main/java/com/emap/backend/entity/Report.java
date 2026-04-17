@@ -62,6 +62,17 @@ public class Report {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "media_urls", columnDefinition = "TEXT")
+private String mediaUrls; // comma-separated S3 URLs
+
+public String getMediaUrls() {
+    return mediaUrls;
+}
+
+public void setMediaUrls(String mediaUrls) {
+    this.mediaUrls = mediaUrls;
+}
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -224,4 +235,6 @@ public class Report {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+
 }

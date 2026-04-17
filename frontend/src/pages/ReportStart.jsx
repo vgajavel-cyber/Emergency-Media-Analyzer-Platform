@@ -11,6 +11,8 @@ import DangerZoneList from "../components/DangerZoneList";
 import SmsNotification from "../components/SmsNotification";
 import AISuggestions from "../components/AISuggestions";
 
+const BACKEND = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 export default function ReportStart() {
   const navigate = useNavigate();
   const [description, setDescription] = useState("");
@@ -62,19 +64,26 @@ export default function ReportStart() {
       }
     };
     try {
-      const res = await fetch("https://ip-api.com/json/");
+      // Get real IP from browser first
+      const ipRes = await fetch("https://api.ipify.org?format=json");
+      const ipData = await ipRes.json();
+      const realIp = ipData.ip;
+
+      // Pass real IP to backend so ip-api.com looks up correct location
+      const res = await fetch(`${BACKEND}/api/location?ip=${realIp}`);
       const data = await res.json();
       if (data.status === "success") {
         const loc = {
           location: data.city || "",
           state: data.regionName || "",
-          ip: data.query || "",
+          ip: realIp || data.query || "",
           latitude: data.lat || null,
           longitude: data.lon || null,
         };
         setLocationData(loc);
         applyGPS(loc);
       } else {
+        setLocationData((prev) => ({ ...prev, ip: realIp }));
         applyGPS({});
       }
     } catch {

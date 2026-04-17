@@ -20,6 +20,12 @@
 	</properties>
 
 	<dependencies>
+		<!-- Amazon Web Services-->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.20.26</version>
+		</dependency>
 
 		<!-- Spring Boot Web -->
 		<dependency>

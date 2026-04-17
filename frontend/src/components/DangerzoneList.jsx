@@ -51,7 +51,7 @@ async function fetchNWSAlerts(lat, lon) {
 // USGS Earthquakes
 async function fetchUSGSEarthquakes(lat, lon) {
   try {
-    const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('.')[0];
+    const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19);
     const res = await fetch(
       `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${lat}&longitude=${lon}&maxradiuskm=80&minmagnitude=2.0&starttime=${startTime}&orderby=time`
     );
@@ -72,10 +72,9 @@ async function fetchUSGSEarthquakes(lat, lon) {
   } catch (e) { return []; }
 }
 
-// USGS Wildfire (Active Fire Perimeters from NIFC)
+// NIFC Wildfires
 async function fetchWildfires(lat, lon) {
   try {
-    // NIFC (National Interagency Fire Center) public GeoJSON - no key needed
     const bbox = `${lon - 0.8},${lat - 0.8},${lon + 0.8},${lat + 0.8}`;
     const url = `https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Fires/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${bbox}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=geojson`;
     const res = await fetch(url);
@@ -95,11 +94,9 @@ async function fetchWildfires(lat, lon) {
   } catch (e) { return []; }
 }
 
-// USGS Flood monitoring (WaterWatch)
+// NWS Flood Alerts
 async function fetchFloodAlerts(lat, lon) {
   try {
-    // NWS flood alerts are included in weather alerts above
-    // Additional: check for flood specifically in NWS alerts
     const res = await fetch(
       `https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}&event=Flood%20Warning,Flash%20Flood%20Warning,Flood%20Watch,Flash%20Flood%20Watch`,
       { headers: { "User-Agent": "EMAP Emergency App (contact@emap.com)" } }
@@ -122,11 +119,44 @@ async function fetchFloodAlerts(lat, lon) {
   } catch (e) { return []; }
 }
 
+// TomTom Traffic Incidents
+async function fetchTrafficIncidents(lat, lon) {
+  try {
+    const apiKey = "gjdPtxWxunjXbvVjapHAaKh8XAN2kXtT";
+    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?key=${apiKey}&bbox=${lon - 0.15},${lat - 0.15},${lon + 0.15},${lat + 0.15}&fields={incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description,code,iconCategory},startTime,endTime,from,to,length,delay,roadNumbers,timeValidity}}}&language=en-GB&categoryFilter=0,1,2,3,4,5,6,7,8,9,10,11&timeValidityFilter=present`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const categories = {
+      0: "Unknown", 1: "Accident", 2: "Fog", 3: "Dangerous Conditions",
+      4: "Rain", 5: "Ice", 6: "Traffic Jam", 7: "Lane Closed",
+      8: "Road Closed", 9: "Road Works", 10: "Wind", 11: "Flooding", 14: "Broken Down Vehicle"
+    };
+    return (data.incidents || []).map((f) => {
+      const props = f.properties;
+      const event = props.events?.[0];
+      const coords = f.geometry?.coordinates;
+      return {
+        id: `tomtom-${props.id}`,
+        source: "TRAFFIC",
+        type: "traffic",
+        title: categories[props.iconCategory] || "Traffic Incident",
+        description: event?.description || `${props.from || ""} → ${props.to || ""}`.trim() || "Traffic incident reported",
+        createdAt: props.startTime || new Date().toISOString(),
+        location: props.from || props.roadNumbers?.[0] || "Nearby road",
+        latitude: Array.isArray(coords?.[0]) ? coords[0][1] : coords?.[1] || lat,
+        longitude: Array.isArray(coords?.[0]) ? coords[0][0] : coords?.[0] || lon,
+      };
+    });
+  } catch (e) { return []; }
+}
+
 const STYLES = {
   weather:    { color: "bg-sky-500",    text: "text-sky-700",    bg: "bg-sky-50",     border: "border-sky-200",    icon: <Cloud className="w-3 h-3 text-white" /> },
   earthquake: { color: "bg-amber-600",  text: "text-amber-700",  bg: "bg-amber-50",   border: "border-amber-200",  icon: <Activity className="w-3 h-3 text-white" /> },
   wildfire:   { color: "bg-orange-500", text: "text-orange-700", bg: "bg-orange-50",  border: "border-orange-200", icon: <Flame className="w-3 h-3 text-white" /> },
   flood:      { color: "bg-blue-500",   text: "text-blue-700",   bg: "bg-blue-50",    border: "border-blue-200",   icon: <AlertTriangle className="w-3 h-3 text-white" /> },
+  traffic:    { color: "bg-yellow-500", text: "text-yellow-700", bg: "bg-yellow-50",  border: "border-yellow-200", icon: <Car className="w-3 h-3 text-white" /> },
   report:     { color: "bg-red-500",    text: "text-red-700",    bg: "bg-red-50",     border: "border-red-200",    icon: <AlertTriangle className="w-3 h-3 text-white" /> },
   default:    { color: "bg-red-500",    text: "text-red-700",    bg: "bg-red-50",     border: "border-red-200",    icon: <AlertTriangle className="w-3 h-3 text-white" /> },
 };
@@ -137,10 +167,11 @@ function getStyle(incident) {
 
 function SourceBadge({ source }) {
   const styles = {
-    NWS:  "text-sky-600 bg-sky-100",
-    USGS: "text-amber-700 bg-amber-100",
-    NIFC: "text-orange-700 bg-orange-100",
-    EMAP: "text-red-600 bg-red-100",
+    NWS:     "text-sky-600 bg-sky-100",
+    USGS:    "text-amber-700 bg-amber-100",
+    NIFC:    "text-orange-700 bg-orange-100",
+    EMAP:    "text-red-600 bg-red-100",
+    TRAFFIC: "text-yellow-700 bg-yellow-100",
   };
   return (
     <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${styles[source] || styles.EMAP}`}>
@@ -161,6 +192,7 @@ export default function DangerZoneList({ latitude, longitude }) {
   const intervalRef = useRef(null);
 
   useEffect(() => {
+    if (!latitude || !longitude) return;
     fetchIncidents(true);
     intervalRef.current = setInterval(() => fetchIncidents(false), 30000);
     return () => clearInterval(intervalRef.current);
@@ -171,15 +203,14 @@ export default function DangerZoneList({ latitude, longitude }) {
     setError(null);
 
     try {
-      // Fetch all sources in parallel
-      const [emapRaw, weather, earthquakes, wildfires] = await Promise.allSettled([
+      const [emapRaw, weather, earthquakes, wildfires, traffic] = await Promise.allSettled([
         reports.listVerified().catch(() => []),
         fetchNWSAlerts(latitude, longitude),
         fetchUSGSEarthquakes(latitude, longitude),
         fetchWildfires(latitude, longitude),
+        fetchTrafficIncidents(latitude, longitude),
       ]);
 
-      // Process EMAP reports
       const emapIncidents = (emapRaw.value || [])
         .filter((r) => {
           if (!latitude || !longitude || !r.latitude || !r.longitude) return true;
@@ -190,20 +221,19 @@ export default function DangerZoneList({ latitude, longitude }) {
       const weatherList = weather.value || [];
       const quakeList = earthquakes.value || [];
       const fireList = wildfires.value || [];
+      const trafficList = traffic.value || [];
 
-      // Combine & sort by newest first
-      const all = [...emapIncidents, ...weatherList, ...quakeList, ...fireList]
+      const all = [...emapIncidents, ...weatherList, ...quakeList, ...fireList, ...trafficList]
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      // Count by source
       setCounts({
-        EMAP: emapIncidents.length,
-        NWS: weatherList.length,
-        USGS: quakeList.length,
-        NIFC: fireList.length,
+        EMAP:    emapIncidents.length,
+        NWS:     weatherList.length,
+        USGS:    quakeList.length,
+        NIFC:    fireList.length,
+        TRAFFIC: trafficList.length,
       });
 
-      // Detect new alerts
       if (!initial) {
         const newOnes = all.filter((r) => !prevIdsRef.current.has(r.id));
         if (newOnes.length > 0 && alertsEnabled) {
@@ -250,10 +280,11 @@ export default function DangerZoneList({ latitude, longitude }) {
       <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100 flex-wrap">
         <span className="text-xs text-gray-400 font-medium">Sources:</span>
         {[
-          { key: "EMAP", label: "EMAP Reports",     cls: "text-red-600 bg-red-100" },
-          { key: "NWS",  label: "Weather",      cls: "text-sky-600 bg-sky-100" },
-          { key: "USGS", label: "Earthquakes", cls: "text-amber-700 bg-amber-100" },
-          { key: "NIFC", label: "Wildfires",   cls: "text-orange-700 bg-orange-100" },
+          { key: "EMAP",    label: "EMAP Reports", cls: "text-red-600 bg-red-100" },
+          { key: "NWS",     label: "Weather",      cls: "text-sky-600 bg-sky-100" },
+          { key: "USGS",    label: "Earthquakes",  cls: "text-amber-700 bg-amber-100" },
+          { key: "NIFC",    label: "Wildfires",    cls: "text-orange-700 bg-orange-100" },
+          { key: "TRAFFIC", label: "Traffic",      cls: "text-yellow-700 bg-yellow-100" },
         ].map(({ key, label, cls }) => (
           <span key={key} className={`text-xs font-bold px-1.5 py-0.5 rounded ${cls}`}>
             {label} {counts[key] !== undefined ? `(${counts[key]})` : ""}
@@ -292,7 +323,7 @@ export default function DangerZoneList({ latitude, longitude }) {
               <AlertTriangle className="w-6 h-6 text-green-500" />
             </div>
             <p className="text-sm font-semibold text-gray-700">No active incidents in your area</p>
-            <p className="text-xs text-gray-400 mt-1">Monitoring EMAP · NWS · USGS · NIFC - refreshing every 30s</p>
+            <p className="text-xs text-gray-400 mt-1">Monitoring EMAP · NWS · USGS · NIFC · Traffic — refreshing every 30s</p>
           </div>
         ) : (
           <div className="space-y-2.5">

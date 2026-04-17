@@ -164,27 +164,25 @@ export default function Track() {
       const token = localStorage.getItem("emap_token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      for (const file of videoFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "video");
-        const res = await fetch(`${BACKEND}/api/media/upload/${reportId}`, {
-          method: "POST", headers, body: formData,
-        });
-        if (!res.ok) throw new Error(`Failed to upload ${file.name}`);
-      }
-      setUploadProgress((prev) => ({ ...prev, video: 100 }));
+      // Combine all files into one sequential loop — video first, then audio
+      const allFiles = [
+        ...videoFiles.map(f => ({ file: f, type: "video" })),
+        ...audioFiles.map(f => ({ file: f, type: "audio" }))
+      ];
 
-      for (const file of audioFiles) {
+      for (const { file, type } of allFiles) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("type", "audio");
-        const res = await fetch(`${BACKEND}/api/media/upload/${reportId}`, {
+        const res = await fetch(`${BACKEND}/api/media/upload?reportId=${reportId}`, {
           method: "POST", headers, body: formData,
         });
         if (!res.ok) throw new Error(`Failed to upload ${file.name}`);
+        const data = await res.json();
+        console.log(`${type} uploaded to S3:`, data.url);
+
+        if (type === "video") setUploadProgress((prev) => ({ ...prev, video: 100 }));
+        else setUploadProgress((prev) => ({ ...prev, audio: 100 }));
       }
-      setUploadProgress((prev) => ({ ...prev, audio: 100 }));
 
       setUploading(false);
       handleContinue();
