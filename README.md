@@ -1,4 +1,4 @@
-# 🚨 EMAP — Emergency Media Analyzer Platform
+# 🚨 Emergency Media Analyzer Platform
 
 > **Capture. Report. Respond. Save Lives.**
 
