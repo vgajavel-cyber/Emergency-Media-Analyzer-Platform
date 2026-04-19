@@ -19,6 +19,8 @@
 		<java.version>17</java.version>
 	</properties>
 
+	
+
 	<dependencies>
 		<!-- Amazon Web Services-->
 		<dependency>
@@ -26,6 +28,20 @@
 			<artifactId>s3</artifactId>
 			<version>2.20.26</version>
 		</dependency>
+
+		<!--Amazon SNS-->
+		<dependency>
+    		<groupId>software.amazon.awssdk</groupId>
+    		<artifactId>sns</artifactId>
+    		<version>2.20.26</version>
+        </dependency>
+
+		<!-- AWS Secrets Manager -->
+<dependency>
+    <groupId>software.amazon.awssdk</groupId>
+    <artifactId>secretsmanager</artifactId>
+    <version>2.20.26</version>
+</dependency>
 
 		<!-- Spring Boot Web -->
 		<dependency>

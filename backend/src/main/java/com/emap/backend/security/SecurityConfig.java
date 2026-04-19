@@ -42,7 +42,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/media/**").permitAll()
                 .requestMatchers("/api/location/**").permitAll()
                 .requestMatchers("/").permitAll()
-                .requestMatchers("/actuator/health").permitAll()    
+                .requestMatchers("/actuator/health").permitAll()  
+                .requestMatchers("/api/sms/**").permitAll()  
 
                 .anyRequest().authenticated()
             )

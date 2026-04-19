@@ -6,7 +6,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,23 +27,20 @@ import com.twilio.type.PhoneNumber;
 @RequestMapping("/api/ai")
 public class AiController {
 
-    @Value("${gemini.api.key}")
-    private String geminiApiKey;
-
-    @Value("${twilio.account.sid:}")
-    private String twilioAccountSid;
-
-    @Value("${twilio.auth.token:}")
-    private String twilioAuthToken;
-
-    @Value("${twilio.phone.number:}")
-    private String twilioPhone;
+    private final String geminiApiKey;
+    private final String twilioAccountSid;
+    private final String twilioAuthToken;
+    private final String twilioPhone;
 
     private final ReportRepository reportRepository;
     private final WebClient webClient = WebClient.create();
 
-    public AiController(ReportRepository reportRepository) {
+    public AiController(ReportRepository reportRepository, Map<String, String> appSecrets) {
         this.reportRepository = reportRepository;
+        this.geminiApiKey = appSecrets.get("gemini.api.key");
+        this.twilioAccountSid = appSecrets.getOrDefault("twilio.account.sid", "");
+        this.twilioAuthToken = appSecrets.getOrDefault("twilio.auth.token", "");
+        this.twilioPhone = appSecrets.getOrDefault("twilio.phone.number", "");
     }
 
     // AI Suggestions — proxies Gemini so you don't expose API key in frontend
@@ -70,13 +66,13 @@ public class AiController {
                 .bodyToMono(String.class)
                 .block();
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-    Object parsed = mapper.readValue(response, Object.class);
-    return ResponseEntity.ok(parsed);
-} catch (WebClientResponseException | WebClientRequestException e) {
-    return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-} catch (Exception e) {
-    return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-}
+            Object parsed = mapper.readValue(response, Object.class);
+            return ResponseEntity.ok(parsed);
+        } catch (WebClientResponseException | WebClientRequestException e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     // Trigger AI Call via Twilio
@@ -95,7 +91,6 @@ public class AiController {
                                 ". Description: " + report.getDescription() +
                                 ". Location: " + report.getLocation() + ". Please respond immediately.";
 
-                        // Build TwiML as inline URL (use ngrok or your server URL in production)
                         String twimlUrl = "http://twimlets.com/message?Message=" +
                                 URLEncoder.encode(message, StandardCharsets.UTF_8);
 

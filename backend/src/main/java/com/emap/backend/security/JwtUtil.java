@@ -2,8 +2,8 @@ package com.emap.backend.security;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -15,11 +15,12 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final String secret;
+    private final long expiration = 86400000L;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+    public JwtUtil(Map<String, String> appSecrets) {
+        this.secret = appSecrets.get("jwt.secret");
+    }
 
     private Key getKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
