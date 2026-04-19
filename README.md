@@ -8,14 +8,6 @@ EMAP is a full-stack emergency reporting platform that enables citizens to submi
 
 ---
 
-## 💡 Inspiration
-
-A mall worker witnessed a robbery but panicked and couldn't describe the robber to police — the robber escaped. In a world where everyone has a smartphone, why not use that footage as emergency evidence?
-
-**EMAP was born** — a platform where you can record or upload video/audio of an incident, submit it with your location, and authorities receive a structured, AI-analyzed alert instantly.
-
----
-
 ## ✨ Features
 
 ### 👤 Citizen Features
@@ -229,13 +221,13 @@ All sensitive credentials (DB password, JWT secret, Gemini API key, Twilio crede
 
 ## 🔮 Future Enhancements
 
-- [ ] SMS A2P 10DLC carrier registration for real SMS delivery
-- [ ] Real-time emergency vehicle tracking map
-- [ ] VPC private subnet for RDS (database not internet-accessible)
-- [ ] Amazon Connect for AI-powered voice calls at scale
-- [ ] Automatic credential rotation via Secrets Manager
-- [ ] Real 911 / PulsePoint API integration
-- [ ] WAF logging to CloudWatch for threat analytics
+1. SMS A2P 10DLC carrier registration for real SMS delivery
+2. Real-time emergency vehicle tracking map
+3. VPC private subnet for RDS (database not internet-accessible)
+4. Amazon Connect for AI-powered voice calls at scale
+5. Automatic credential rotation via Secrets Manager
+6. Real 911 / PulsePoint API integration
+7. WAF logging to CloudWatch for threat analytics
 
 ---
 
@@ -245,15 +237,15 @@ All sensitive credentials (DB password, JWT secret, Gemini API key, Twilio crede
 
 | Citizen Report Flow | Admin Dashboard |
 |---|---|
-| ![Report](screenshots/report.png) | ![Admin](screenshots/admin.png) |
+| ![Report](Report.png) | ![Admin](Admin.png) |
 
 ---
 
 ## 👩‍💻 Author
 
 **Praveena Gajavelli**
-MS Information Technology — Arizona State University (GPA: 3.96/4.0)
-QE Technician — Tesla
+MS Information Technology — Arizona State University (GPA: 4.0/4.0)
+
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/your-profile)
 [![Live Demo](https://img.shields.io/badge/Live-emapnow.me-red)](https://emapnow.me)
