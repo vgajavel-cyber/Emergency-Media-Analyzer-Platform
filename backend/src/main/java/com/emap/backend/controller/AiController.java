@@ -48,7 +48,7 @@ public class AiController {
     public ResponseEntity<?> getSuggestions(@RequestBody Map<String, String> body) {
         String prompt = body.get("prompt");
 
-        String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + geminiApiKey;
+        String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + geminiApiKey;
 
         Map<String, Object> requestBody = Map.of(
             "contents", new Object[]{
