@@ -8,10 +8,12 @@ import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -41,6 +43,16 @@ public class AiController {
         this.twilioAccountSid = appSecrets.getOrDefault("twilio.account.sid", "");
         this.twilioAuthToken = appSecrets.getOrDefault("twilio.auth.token", "");
         this.twilioPhone = appSecrets.getOrDefault("twilio.phone.number", "");
+    }
+
+    // TwiML endpoint — Twilio calls this to get call instructions
+    @GetMapping("/twiml")
+    public ResponseEntity<String> twiml(@RequestParam String message) {
+        String twiml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<Response><Say voice=\"alice\">" + message + "</Say></Response>";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_XML)
+                .body(twiml);
     }
 
     // AI Suggestions — proxies Gemini so you don't expose API key in frontend
@@ -91,7 +103,7 @@ public class AiController {
                                 ". Description: " + report.getDescription() +
                                 ". Location: " + report.getLocation() + ". Please respond immediately.";
 
-                        String twimlUrl = "http://twimlets.com/message?Message=" +
+                        String twimlUrl = "http://54.242.178.213:8080/api/ai/twiml?message=" +
                                 URLEncoder.encode(message, StandardCharsets.UTF_8);
 
                         String toNumber = report.getUserPhone();
